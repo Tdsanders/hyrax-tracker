@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HYROX">
+<meta name="description" content="HYROX Dallas Training Tracker — hybrid athlete command center">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<title>HYROX Dallas</title>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --bg2: #141414;
+    --bg3: #1c1c1c;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #f0f0f0;
+    --text2: #888;
+    --text3: #555;
+    --accent: #e8ff4a;
+    --accent-dim: rgba(232,255,74,0.12);
+    --red: #ff4a4a;
+    --green: #4aff8c;
+    --orange: #ff8c4a;
+    --blue: #4a8cff;
+    --radius: 10px;
+    --radius-sm: 6px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: -apple-system, 'SF Pro Text', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  /* TOP BAR */
+  .topbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: rgba(10,10,10,0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding: calc(var(--safe-top) + 12px) 16px 12px;
+    border-bottom: 0.5px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .topbar-title { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
+  .topbar-sub { font-size: 12px; color: var(--accent); font-weight: 500; letter-spacing: 0.04em; }
+
+  /* CONTENT */
+  .content {
+    padding-top: calc(var(--safe-top) + 70px);
+    padding-bottom: calc(var(--safe-bottom) + 72px);
+    min-height: 100dvh;
+  }
+
+  .page { display: none; padding: 16px; }
+  .page.active { display: block; }
+
+  /* BOTTOM NAV */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: rgba(10,10,10,0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 0.5px solid var(--border);
+    display: flex;
+    padding: 8px 0 calc(var(--safe-bottom) + 8px);
+  }
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 6px 4px;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: var(--text3);
+    transition: color 0.15s;
+  }
+  .nav-item.active { color: var(--accent); }
+  .nav-item i { font-size: 22px; }
+  .nav-label { font-size: 10px; font-weight: 500; letter-spacing: 0.02em; }
+
+  /* CARDS */
+  .card {
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .card-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 12px;
+  }
+
+  /* METRIC GRID */
+  .metric-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .metric-card {
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 10px;
+    text-align: center;
+  }
+  .metric-label { font-size: 10px; color: var(--text3); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .metric-val { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; }
+  .metric-target { font-size: 10px; color: var(--text3); margin-top: 2px; }
+  .metric-val.good { color: var(--green); }
+  .metric-val.warn { color: var(--orange); }
+
+  /* PHASES */
+  .phase-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .phase-card {
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+  }
+  .phase-card.active-phase {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+  }
+  .phase-num { font-size: 10px; color: var(--text3); margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .phase-name { font-size: 12px; font-weight: 600; line-height: 1.3; }
+  .phase-weeks { font-size: 10px; color: var(--text3); margin-top: 4px; }
+  .active-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-right: 4px; }
+
+  /* HR ZONES */
+  .zone-rows { display: flex; flex-direction: column; gap: 8px; }
+  .zone-row { display: flex; align-items: center; gap: 10px; }
+  .zone-label { font-size: 12px; color: var(--text2); width: 90px; flex-shrink: 0; }
+  .zone-track { flex: 1; height: 8px; background: var(--bg3); border-radius: 4px; overflow: hidden; }
+  .zone-bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+  .zone-time { font-size: 12px; font-weight: 500; width: 30px; text-align: right; }
+
+  /* FORM */
+  .form-section-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 16px 0 10px;
+  }
+  .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-label { font-size: 12px; color: var(--text2); }
+
+  input, select, textarea {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--bg3);
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 15px;
+    font-family: inherit;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+  textarea { resize: none; height: 80px; line-height: 1.5; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+
+  .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 13px 20px;
+    border-radius: var(--radius);
+    border: none;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: opacity 0.15s, transform 0.1s;
+    width: 100%;
+  }
+  .btn:active { transform: scale(0.98); opacity: 0.85; }
+  .btn-primary { background: var(--accent); color: #0a0a0a; }
+  .btn-secondary { background: var(--bg3); color: var(--text); border: 0.5px solid var(--border2); }
+  .btn-sm { padding: 8px 14px; font-size: 13px; width: auto; }
+
+  .btn-row { display: flex; gap: 8px; margin-top: 16px; }
+
+  /* RPE */
+  .rpe-display { font-size: 36px; font-weight: 700; text-align: center; color: var(--accent); margin: 4px 0; }
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--bg3);
+    border-radius: 2px;
+    border: none;
+    padding: 0;
+    outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 22px;
+    height: 22px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+  /* EXERCISE ENTRIES */
+  .exercise-entry {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+    align-items: flex-end;
+  }
+  .exercise-entry .form-group { flex: 1; }
+  .exercise-entry .form-group:last-child { flex: 0.7; }
+  .del-btn {
+    width: 36px;
+    height: 38px;
+    flex-shrink: 0;
+    background: var(--bg3);
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius-sm);
+    color: var(--text3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+  }
+
+  /* HISTORY */
+  .session-card {
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-bottom: 10px;
+  }
+  .session-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .session-type { font-size: 15px; font-weight: 600; }
+  .session-rpe { font-size: 13px; font-weight: 700; color: var(--accent); }
+  .session-meta { font-size: 12px; color: var(--text2); display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+  .session-notes { font-size: 13px; color: var(--text2); line-height: 1.5; padding-top: 8px; border-top: 0.5px solid var(--border); }
+  .session-exercises { margin-top: 8px; padding-top: 8px; border-top: 0.5px solid var(--border); }
+  .ex-row { font-size: 12px; color: var(--text2); padding: 3px 0; }
+  .ex-row span { color: var(--text); font-weight: 500; }
+
+  /* PROGRAM */
+  .day-block { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); margin-bottom: 10px; overflow: hidden; }
+  .day-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; cursor: pointer; }
+  .day-name { font-size: 15px; font-weight: 600; }
+  .day-focus { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .day-chevron { color: var(--text3); font-size: 18px; transition: transform 0.2s; }
+  .day-chevron.open { transform: rotate(180deg); }
+  .day-body { display: none; border-top: 0.5px solid var(--border); padding: 14px 16px; }
+  .day-body.open { display: block; }
+  .block-section { margin-bottom: 12px; }
+  .block-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; margin-bottom: 6px; }
+  .block-item { font-size: 13px; color: var(--text2); padding: 4px 0; border-bottom: 0.5px solid var(--border); line-height: 1.4; }
+  .block-item:last-child { border-bottom: none; }
+  .intensity-badge { display: inline-block; background: rgba(232,255,74,0.1); color: var(--accent); font-size: 11px; padding: 6px 10px; border-radius: var(--radius-sm); margin-top: 8px; line-height: 1.5; width: 100%; }
+
+  /* STABILITY */
+  .stab-exercise { margin-bottom: 10px; }
+  .stab-name { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+  .stab-metric { font-size: 11px; color: var(--text3); margin-bottom: 6px; }
+  .week-inputs { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; }
+  .week-input-wrap { display: flex; flex-direction: column; gap: 2px; align-items: center; }
+  .week-label { font-size: 9px; color: var(--text3); text-transform: uppercase; }
+  .week-input { padding: 6px 4px; text-align: center; font-size: 12px; }
+
+  /* SECTION HEADER */
+  .section-header {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 16px 0 8px;
+    border-bottom: 0.5px solid var(--border);
+    margin-bottom: 12px;
+  }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: calc(var(--safe-bottom) + 80px);
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--accent);
+    color: #0a0a0a;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 20px;
+    opacity: 0;
+    transition: all 0.25s;
+    pointer-events: none;
+    z-index: 200;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* BENCHMARK TABLE */
+  .benchmark-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .benchmark-row:last-child { border-bottom: none; }
+  .benchmark-info { flex: 1; }
+  .benchmark-name { font-size: 14px; font-weight: 500; }
+  .benchmark-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .benchmark-target { font-size: 12px; color: var(--text3); width: 48px; text-align: center; }
+  .benchmark-actual input { width: 72px; text-align: center; padding: 7px 8px; font-size: 13px; }
+  .benchmark-delta { font-size: 12px; font-weight: 600; width: 44px; text-align: right; }
+  .delta-good { color: var(--green); }
+  .delta-bad { color: var(--red); }
+
+  .empty { text-align: center; padding: 40px 20px; color: var(--text3); font-size: 14px; line-height: 1.6; }
+
+  .phase-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+  .phase-tab { flex: 1; padding: 9px; border: 0.5px solid var(--border2); border-radius: var(--radius-sm); background: transparent; color: var(--text2); font-size: 13px; font-weight: 500; cursor: pointer; text-align: center; }
+  .phase-tab.active { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
+  .phase-content { display: none; }
+  .phase-content.active { display: block; }
+
+  .save-msg { font-size: 13px; color: var(--green); text-align: center; margin-top: 10px; display: none; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <div class="topbar-title">HYROX Dallas</div>
+    <div class="topbar-sub" id="topbar-phase">Phase 1 — Forge the Chassis</div>
+  </div>
+  <div style="font-size:12px;color:var(--text3)" id="session-count-top"></div>
+</div>
+
+<div class="content">
+
+  <!-- DASHBOARD -->
+  <div class="page active" id="page-dashboard">
+    <div class="phase-row">
+      <div class="phase-card active-phase">
+        <div class="phase-num"><span class="active-dot"></span>Active</div>
+        <div class="phase-name">Forge the Chassis</div>
+        <div class="phase-weeks">Wk 1–6 · 3-4 hrs</div>
+      </div>
+      <div class="phase-card">
+        <div class="phase-num">Phase 2</div>
+        <div class="phase-name">Load the Spring</div>
+        <div class="phase-weeks">Wk 7–10</div>
+      </div>
+      <div class="phase-card">
+        <div class="phase-num">Phase 3</div>
+        <div class="phase-name">Sharpen the Blade</div>
+        <div class="phase-weeks">Wk 11–12</div>
+      </div>
+    </div>
+
+    <div class="metric-grid">
+      <div class="metric-card">
+        <div class="metric-label">Sessions</div>
+        <div class="metric-val" id="kpi-sessions">—</div>
+        <div class="metric-target">Logged</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Max HR</div>
+        <div class="metric-val" id="kpi-maxhr">—</div>
+        <div class="metric-target">Target: 185+</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Avg RPE</div>
+        <div class="metric-val" id="kpi-rpe">—</div>
+        <div class="metric-target">Last 5</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Avg Z4+5</div>
+        <div class="metric-val" id="kpi-z45">—</div>
+        <div class="metric-target">Target: 25m+</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Avg HR</div>
+        <div class="metric-val" id="kpi-avghr">—</div>
+        <div class="metric-target">Last session</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Calories</div>
+        <div class="metric-val" id="kpi-cals">—</div>
+        <div class="metric-target">Last session</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">HR zones — last session</div>
+      <div class="zone-rows">
+        <div class="zone-row">
+          <div class="zone-label">Z1 Recovery</div>
+          <div class="zone-track"><div class="zone-bar-fill" id="zf1" style="width:0%;background:#444"></div></div>
+          <div class="zone-time" id="zt1">—</div>
+        </div>
+        <div class="zone-row">
+          <div class="zone-label">Z2 Aerobic</div>
+          <div class="zone-track"><div class="zone-bar-fill" id="zf2" style="width:0%;background:#1D9E75"></div></div>
+          <div class="zone-time" id="zt2">—</div>
+        </div>
+        <div class="zone-row">
+          <div class="zone-label">Z3 Threshold</div>
+          <div class="zone-track"><div class="zone-bar-fill" id="zf3" style="width:0%;background:#378ADD"></div></div>
+          <div class="zone-time" id="zt3">—</div>
+        </div>
+        <div class="zone-row">
+          <div class="zone-label">Z4 Hard</div>
+          <div class="zone-track"><div class="zone-bar-fill" id="zf4" style="width:0%;background:#EF9F27"></div></div>
+          <div class="zone-time" id="zt4">—</div>
+        </div>
+        <div class="zone-row">
+          <div class="zone-label">Z5 Max</div>
+          <div class="zone-track"><div class="zone-bar-fill" id="zf5" style="width:0%;background:#ff4a4a"></div></div>
+          <div class="zone-time" id="zt5">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Time trial benchmarks</div>
+      <div id="benchmark-list">
+        <div class="benchmark-row">
+          <div class="benchmark-info"><div class="benchmark-name">Opening shot</div><div class="benchmark-sub">Wk 1 · 5K</div></div>
+          <div class="benchmark-target">27:30</div>
+          <div class="benchmark-actual"><input type="text" placeholder="—" id="b1" oninput="calcDelta(0,this,'27:30')"></div>
+          <div class="benchmark-delta" id="bd0">—</div>
+        </div>
+        <div class="benchmark-row">
+          <div class="benchmark-info"><div class="benchmark-name">Phase 1 check</div><div class="benchmark-sub">Wk 4 · 10K</div></div>
+          <div class="benchmark-target">57:00</div>
+          <div class="benchmark-actual"><input type="text" placeholder="—" id="b2" oninput="calcDelta(1,this,'57:00')"></div>
+          <div class="benchmark-delta" id="bd1">—</div>
+        </div>
+        <div class="benchmark-row">
+          <div class="benchmark-info"><div class="benchmark-name">Mid reassess</div><div class="benchmark-sub">Wk 6 · 8K</div></div>
+          <div class="benchmark-target">44:00</div>
+          <div class="benchmark-actual"><input type="text" placeholder="—" id="b3" oninput="calcDelta(2,this,'44:00')"></div>
+          <div class="benchmark-delta" id="bd2">—</div>
+        </div>
+        <div class="benchmark-row">
+          <div class="benchmark-info"><div class="benchmark-name">Engine test</div><div class="benchmark-sub">Wk 10 · 5K</div></div>
+          <div class="benchmark-target">26:00</div>
+          <div class="benchmark-actual"><input type="text" placeholder="—" id="b4" oninput="calcDelta(3,this,'26:00')"></div>
+          <div class="benchmark-delta" id="bd3">—</div>
+        </div>
+        <div class="benchmark-row">
+          <div class="benchmark-info"><div class="benchmark-name">Race benchmark</div><div class="benchmark-sub">Wk 12 · 8K</div></div>
+          <div class="benchmark-target">42:00</div>
+          <div class="benchmark-actual"><input type="text" placeholder="—" id="b5" oninput="calcDelta(4,this,'42:00')"></div>
+          <div class="benchmark-delta" id="bd4">—</div>
+        </div>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="saveBenchmarks()" style="margin-top:12px">Save benchmarks</button>
+    </div>
+  </div>
+
+  <!-- LOG SESSION -->
+  <div class="page" id="page-log">
+    <div class="card">
+      <div class="card-title">New session</div>
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label">Date</label>
+          <input type="date" id="log-date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phase / Week</label>
+          <select id="log-phase">
+            <option>Ph1 / Wk1</option><option>Ph1 / Wk2</option><option>Ph1 / Wk3</option>
+            <option>Ph1 / Wk4</option><option>Ph1 / Wk5</option><option>Ph1 / Wk6</option>
+            <option>Ph2 / Wk7</option><option>Ph2 / Wk8</option><option>Ph2 / Wk9</option>
+            <option>Ph2 / Wk10</option><option>Ph3 / Wk11</option><option>Ph3 / Wk12</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-top:10px">
+        <label class="form-label">Session type</label>
+        <select id="log-type">
+          <option>Engine Power + Plyometrics</option>
+          <option>Structural Strength</option>
+          <option>Compromised Run</option>
+          <option>Active Recovery + Mobility</option>
+          <option>Volume, Incline + Upper Body</option>
+          <option>Time Trial</option>
+          <option>Race Simulation</option>
+          <option>Other</option>
+        </select>
+      </div>
+
+      <div class="form-section-label">Apple Watch</div>
+      <div class="form-grid-3">
+        <div class="form-group"><label class="form-label">Duration (min)</label><input type="number" inputmode="decimal" id="log-duration" placeholder="60"></div>
+        <div class="form-group"><label class="form-label">Avg HR</label><input type="number" inputmode="decimal" id="log-avghr" placeholder="158"></div>
+        <div class="form-group"><label class="form-label">Max HR</label><input type="number" inputmode="decimal" id="log-maxhr" placeholder="183"></div>
+      </div>
+      <div class="form-grid-2" style="margin-top:10px">
+        <div class="form-group"><label class="form-label">Active calories</label><input type="number" inputmode="decimal" id="log-cals" placeholder="620"></div>
+        <div class="form-group"><label class="form-label">Distance (mi)</label><input type="number" inputmode="decimal" id="log-dist" placeholder="3.1" step="0.1"></div>
+      </div>
+
+      <div class="form-section-label">HR zones (minutes)</div>
+      <div class="form-grid-3">
+        <div class="form-group"><label class="form-label">Z1 &lt;138</label><input type="number" inputmode="decimal" id="log-z1" placeholder="0"></div>
+        <div class="form-group"><label class="form-label">Z2 139–151</label><input type="number" inputmode="decimal" id="log-z2" placeholder="0"></div>
+        <div class="form-group"><label class="form-label">Z3 152–163</label><input type="number" inputmode="decimal" id="log-z3" placeholder="0"></div>
+      </div>
+      <div class="form-grid-2" style="margin-top:10px">
+        <div class="form-group"><label class="form-label">Z4 164–176</label><input type="number" inputmode="decimal" id="log-z4" placeholder="0"></div>
+        <div class="form-group"><label class="form-label">Z5 177+</label><input type="number" inputmode="decimal" id="log-z5" placeholder="0"></div>
+      </div>
+
+      <div class="form-section-label">Exercises</div>
+      <div id="exercise-entries"></div>
+      <button class="btn btn-secondary btn-sm" onclick="addExerciseRow()" style="margin-bottom:4px">
+        <i class="ti ti-plus" aria-hidden="true"></i> Add exercise
+      </button>
+
+      <div class="form-section-label">RPE</div>
+      <div class="rpe-display" id="rpe-display">7</div>
+      <input type="range" min="1" max="10" value="7" id="log-rpe" oninput="document.getElementById('rpe-display').textContent=this.value" style="margin-top:8px">
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:4px"><span>Easy</span><span>Max</span></div>
+
+      <div class="form-group" style="margin-top:14px">
+        <label class="form-label">Notes / reflection</label>
+        <textarea id="log-notes" placeholder="How did it feel? What clicked? What held you back?"></textarea>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="saveSession()"><i class="ti ti-check" aria-hidden="true"></i> Save session</button>
+      </div>
+      <div class="save-msg" id="log-save-msg">Session saved.</div>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="page" id="page-history">
+    <div id="history-container"></div>
+  </div>
+
+  <!-- PROGRAM -->
+  <div class="page" id="page-program">
+    <div class="phase-tabs">
+      <button class="phase-tab active" onclick="switchProgramTab('prog-p1', this)">Phase 1</button>
+      <button class="phase-tab" onclick="switchProgramTab('prog-p2', this)">Phase 2</button>
+      <button class="phase-tab" onclick="switchProgramTab('prog-p3', this)">Phase 3</button>
+    </div>
+    <div class="phase-content active" id="prog-p1">
+      <div id="workout-days-container"></div>
+    </div>
+    <div class="phase-content" id="prog-p2">
+      <div class="empty">Phase 2 — Load the Spring<br>Unlocks after Phase 1 completion<br><br>Wk 7–10 · Compromised running + elastic power integration</div>
+    </div>
+    <div class="phase-content" id="prog-p3">
+      <div class="empty">Phase 3 — Sharpen the Blade<br>Unlocks after Phase 2 completion<br><br>Wk 11–12 · Race simulation + peak + taper</div>
+    </div>
+  </div>
+
+  <!-- STABILITY -->
+  <div class="page" id="page-stability">
+    <div id="stability-container"></div>
+    <button class="btn btn-primary" onclick="saveStability()" style="margin-top:4px">
+      <i class="ti ti-device-floppy" aria-hidden="true"></i> Save progress
+    </button>
+    <div class="save-msg" id="stab-save-msg" style="margin-top:10px">Saved.</div>
+  </div>
+
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-item active" onclick="switchPage('dashboard', this)">
+    <i class="ti ti-dashboard" aria-hidden="true"></i>
+    <span class="nav-label">Dashboard</span>
+  </button>
+  <button class="nav-item" onclick="switchPage('log', this)">
+    <i class="ti ti-pencil" aria-hidden="true"></i>
+    <span class="nav-label">Log</span>
+  </button>
+  <button class="nav-item" onclick="switchPage('history', this)">
+    <i class="ti ti-history" aria-hidden="true"></i>
+    <span class="nav-label">History</span>
+  </button>
+  <button class="nav-item" onclick="switchPage('program', this)">
+    <i class="ti ti-list-check" aria-hidden="true"></i>
+    <span class="nav-label">Program</span>
+  </button>
+  <button class="nav-item" onclick="switchPage('stability', this)">
+    <i class="ti ti-barbell" aria-hidden="true"></i>
+    <span class="nav-label">Stability</span>
+  </button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SESSIONS_KEY = 'hyrox_sessions_v2';
+const STABILITY_KEY = 'hyrox_stability_v2';
+const BENCHMARKS_KEY = 'hyrox_benchmarks_v2';
+
+let sessions = JSON.parse(localStorage.getItem(SESSIONS_KEY) || '[]');
+if (sessions.length === 0) {
+  sessions = [
+    { date: '2025-04-22', phase: 'Ph1 / Wk1', type: 'Engine Power + Plyometrics', duration: 52, avgHr: 158, maxHr: 183, calories: null, distance: null, z1: 7, z2: 11, z3: 11, z4: 14, z5: 9, rpe: 9, notes: 'Screenshot Session 1 — Heavy Zone 4+5', exercises: [] },
+    { date: '2025-04-22', phase: 'Ph1 / Wk1', type: 'Structural Strength', duration: 60, avgHr: 155, maxHr: 181, calories: null, distance: null, z1: 6, z2: 14, z3: 22, z4: 15, z5: 2, rpe: 8, notes: 'Screenshot Session 2 — Sustained Zone 3', exercises: [] }
+  ];
+}
+
+const stabilityExercises = [
+  { section: 'Lower body stability', items: [
+    { name: 'Bulgarian Split Squat (L)', m: 'Weight (lbs) / Reps' },
+    { name: 'Bulgarian Split Squat (R)', m: 'Weight (lbs) / Reps' },
+    { name: 'Single-leg RDL (L)', m: 'Weight (lbs) / Reps' },
+    { name: 'Single-leg RDL (R)', m: 'Weight (lbs) / Reps' },
+    { name: 'Deficit Heel Raise', m: 'Weight (lbs) / Reps' },
+    { name: 'Copenhagen Plank (L)', m: 'Duration (sec) / Sets' },
+    { name: 'Copenhagen Plank (R)', m: 'Duration (sec) / Sets' }
+  ]},
+  { section: 'Hip & ankle mobility', items: [
+    { name: 'Wall Ankle Mob (L)', m: 'Gap (cm)' },
+    { name: 'Wall Ankle Mob (R)', m: 'Gap (cm)' },
+    { name: '90/90 Hip Mobility', m: 'Duration / Quality 1–5' },
+    { name: 'Couch Stretch', m: 'Duration / Quality 1–5' }
+  ]},
+  { section: 'Core anti-rotation', items: [
+    { name: 'Pallof Press', m: 'Weight (lbs) / Reps' },
+    { name: 'Dead Bug', m: 'Sets / Reps' },
+    { name: 'Suitcase Carry', m: 'Weight (lbs) / Distance (m)' },
+    { name: 'Farmer Carry', m: 'Weight (lbs) / Distance (m)' }
+  ]},
+  { section: 'Plyometrics', items: [
+    { name: 'Box Jump', m: 'Height (in) / Sets×Reps' },
+    { name: 'Broad Jump', m: 'Distance (ft) / Sets' },
+    { name: 'Depth Drop', m: 'Box Height (in) / Sets' }
+  ]}
+];
+
+const workoutDays = [
+  { day: 'Monday', focus: 'Engine Power + Plyometrics', blocks: [
+    { label: 'Warm-up (10 min)', items: ['Jump rope', 'Dynamic hip circles', 'Ankle rotations'] },
+    { label: 'Plyometric block', items: ['Wk1–2: Box Jumps 5×5 max height + Broad Jumps 4×5', 'Wk3–4: Single-leg bounding 4×20m + Hurdle hops 3×8', 'Wk5–6: Depth drops → sprint 4×5 + Bounding 3×30m'] },
+    { label: 'Engine block', items: ['4 rounds: 1000m Row + 500m SkiErg + 400m Sprint'] },
+    { label: 'Finish', items: ['50m Sled Pull OR 100 Wall Balls'] }
+  ], intensity: 'Plyo: full recovery. Engine: Zone 3–4 (152–176 BPM). Finish: Zone 4–5.' },
+  { day: 'Tuesday', focus: 'Structural Strength (Heavy)', blocks: [
+    { label: 'Warm-up (10 min)', items: ['90/90 hip mobility', 'Banded ankle work', 'Glute activation'] },
+    { label: 'Block A', items: ['Bulgarian Split Squat 4×6 each leg', 'Single-leg RDL 4×8 each leg'] },
+    { label: 'Block B', items: ['Copenhagen Planks 3×25 sec each', 'Deficit Heel Raises (3-sec ecc) 3×12'] },
+    { label: 'Block C', items: ['Tibialis Raises 3×20', 'Suitcase Carries 4×40m each arm'] },
+    { label: 'Engine', items: ['4–6 × 800m @ 8:30 pace; final 800m @ 8:00'] }
+  ], intensity: 'Strength: Zone 1–2. 800m runs: Zone 3–4.' },
+  { day: 'Wednesday', focus: 'Compromised Run (Sacred)', blocks: [
+    { label: 'Threshold run', items: ['1.5 miles @ 9:00/mi → push to 8:45'] },
+    { label: 'Compromised circuit — 3 rounds', items: ['1000m Ski Erg → 20 Burpees → 800m Run', 'ZERO rest between stations'] },
+    { label: 'Core finisher', items: ['Pallof Press 3×12 each', 'Dead Bug w/ band 3×10 each', 'Single-leg RDL hold 3×30 sec'] }
+  ], intensity: 'Threshold: Zone 3. Circuit: Zone 4–5 (164–183 BPM). This is your most important session.' },
+  { day: 'Thursday', focus: 'Active Recovery + Mobility', blocks: [
+    { label: 'Easy run (45 min)', items: ['Zone 1–2 only. Max 151 BPM.', 'Walk if HR exceeds 151. No ego.'] },
+    { label: 'Mobility circuit (20 min)', items: ['90/90 Hip: 2 min each position', 'Ankle CARs: 10 each direction', 'Wall Ankle Mob: 3×15 each', 'Couch Stretch: 2 min each hip', 'Foam Roll: IT band, calves, thoracic'] }
+  ], intensity: 'Zone 1 only. Max 151 BPM. If you go above, you failed Thursday.' },
+  { day: 'Friday', focus: 'Volume, Incline + Upper Body', blocks: [
+    { label: 'Incline (30 min)', items: ['Treadmill 10–12% grade, 3.5–4.0 mph', 'Zone 2 (139–151 BPM)'] },
+    { label: 'Upper body', items: ['Bench/DB Press 4×8 + Dips 3×12', 'Weighted Pull-ups 4×6 + DB Rows 4×10', 'Farmer Carries 4×50m'] },
+    { label: 'Conditioning finisher', items: ['5 rounds: 20 Burpees + 400m run'] },
+    { label: 'Easy run', items: ['30 min Zone 1–2 (conversational)'] }
+  ], intensity: 'Incline: Zone 2. Finisher: Zone 4. Carries > burpees for HYROX carryover.' },
+  { day: 'Saturday / Sunday', focus: 'Full Rest or Mobility Only', blocks: [
+    { label: 'Option A — preferred', items: ['Complete rest. Sleep 8+ hrs.', 'Eat aggressively. You are rebuilding structural tissue.'] },
+    { label: 'Option B — if needed', items: ['20–30 min: 90/90, ankle CARs, foam roll', 'Easy 20 min walk max', 'No running. No lifting. No "just a quick one."'] }
+  ], intensity: 'You are not made during the session. You are made in the recovery between sessions.' }
+];
+
+// NAV
+function switchPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'history') renderHistory();
+  if (id === 'stability') renderStability();
+  if (id === 'dashboard') updateDashboard();
+  window.scrollTo(0, 0);
+}
+
+function switchProgramTab(id, btn) {
+  document.querySelectorAll('.phase-content').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.phase-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// TOAST
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// EXERCISE ROWS
+function addExerciseRow() {
+  const c = document.getElementById('exercise-entries');
+  const d = document.createElement('div');
+  d.className = 'exercise-entry';
+  d.innerHTML = `
+    <div class="form-group"><label class="form-label">Exercise</label><input type="text" class="ex-name" placeholder="e.g. Box Jump"></div>
+    <div class="form-group"><label class="form-label">Set / result</label><input type="text" class="ex-result" placeholder="5×5 @ 24in"></div>
+    <button class="del-btn" onclick="this.parentElement.remove()" aria-label="Remove"><i class="ti ti-x"></i></button>
+  `;
+  c.appendChild(d);
+}
+
+// SAVE SESSION
+function saveSession() {
+  const exercises = [];
+  document.querySelectorAll('.exercise-entry').forEach(r => {
+    const n = r.querySelector('.ex-name').value.trim();
+    const v = r.querySelector('.ex-result').value.trim();
+    if (n) exercises.push({ name: n, result: v });
+  });
+  const s = {
+    date: document.getElementById('log-date').value || new Date().toISOString().slice(0,10),
+    phase: document.getElementById('log-phase').value,
+    type: document.getElementById('log-type').value,
+    duration: +document.getElementById('log-duration').value || null,
+    avgHr: +document.getElementById('log-avghr').value || null,
+    maxHr: +document.getElementById('log-maxhr').value || null,
+    calories: +document.getElementById('log-cals').value || null,
+    distance: +document.getElementById('log-dist').value || null,
+    z1: +document.getElementById('log-z1').value || 0,
+    z2: +document.getElementById('log-z2').value || 0,
+    z3: +document.getElementById('log-z3').value || 0,
+    z4: +document.getElementById('log-z4').value || 0,
+    z5: +document.getElementById('log-z5').value || 0,
+    rpe: +document.getElementById('log-rpe').value,
+    notes: document.getElementById('log-notes').value.trim(),
+    exercises
+  };
+  sessions.unshift(s);
+  localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
+  showToast('Session saved');
+  clearLogForm();
+  updateDashboard();
+}
+
+function clearLogForm() {
+  ['log-duration','log-avghr','log-maxhr','log-cals','log-dist','log-z1','log-z2','log-z3','log-z4','log-z5','log-notes'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  document.getElementById('log-rpe').value = 7;
+  document.getElementById('rpe-display').textContent = '7';
+  document.getElementById('exercise-entries').innerHTML = '';
+  addExerciseRow();
+}
+
+// DASHBOARD
+function updateDashboard() {
+  document.getElementById('kpi-sessions').textContent = sessions.length;
+  if (sessions.length === 0) return;
+  const last = sessions[0];
+  const recent5 = sessions.slice(0, 5);
+  document.getElementById('kpi-rpe').textContent = (recent5.reduce((a, s) => a + s.rpe, 0) / recent5.length).toFixed(1);
+  const maxHrs = sessions.map(s => s.maxHr).filter(Boolean);
+  if (maxHrs.length) document.getElementById('kpi-maxhr').textContent = Math.max(...maxHrs);
+  const z45s = sessions.filter(s => s.z4 || s.z5).map(s => (s.z4||0) + (s.z5||0));
+  if (z45s.length) document.getElementById('kpi-z45').textContent = Math.round(z45s.reduce((a,v) => a+v,0)/z45s.length) + 'm';
+  if (last.avgHr) document.getElementById('kpi-avghr').textContent = last.avgHr;
+  if (last.calories) document.getElementById('kpi-cals').textContent = last.calories;
+  document.getElementById('session-count-top').textContent = sessions.length + ' sessions';
+  const total = (last.z1||0)+(last.z2||0)+(last.z3||0)+(last.z4||0)+(last.z5||0) || 1;
+  [1,2,3,4,5].forEach(i => {
+    const val = last['z'+i] || 0;
+    document.getElementById('zt'+i).textContent = val + 'm';
+    document.getElementById('zf'+i).style.width = Math.round((val/total)*100) + '%';
+  });
+}
+
+// HISTORY
+function renderHistory() {
+  const c = document.getElementById('history-container');
+  if (sessions.length === 0) {
+    c.innerHTML = '<div class="empty">No sessions yet.<br>Log your first one.</div>';
+    return;
+  }
+  c.innerHTML = sessions.map((s, i) => `
+    <div class="session-card">
+      <div class="session-header">
+        <div>
+          <div class="session-type">${s.type}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">${s.date} · ${s.phase}</div>
+        </div>
+        <div class="session-rpe">RPE ${s.rpe}</div>
+      </div>
+      <div class="session-meta">
+        ${s.duration ? '<span>' + s.duration + ' min</span>' : ''}
+        ${s.avgHr ? '<span>' + s.avgHr + ' avg HR</span>' : ''}
+        ${s.maxHr ? '<span>' + s.maxHr + ' max HR</span>' : ''}
+        ${s.calories ? '<span>' + s.calories + ' cal</span>' : ''}
+        ${s.distance ? '<span>' + s.distance + ' mi</span>' : ''}
+        ${(s.z4||s.z5) ? '<span>Z4+5: ' + ((s.z4||0)+(s.z5||0)) + 'm</span>' : ''}
+      </div>
+      ${s.exercises && s.exercises.length ? `<div class="session-exercises">${s.exercises.map(e => `<div class="ex-row"><span>${e.name}</span>${e.result ? ' — ' + e.result : ''}</div>`).join('')}</div>` : ''}
+      ${s.notes ? `<div class="session-notes">${s.notes}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+// BENCHMARKS
+function calcDelta(idx, input, target) {
+  const toSec = t => { const p = t.split(':'); return (+p[0]) * 60 + (+p[1]); };
+  const el = document.getElementById('bd' + idx);
+  try {
+    if (!input.value.includes(':')) { el.textContent = '—'; el.className = 'benchmark-delta'; return; }
+    const d = toSec(input.value) - toSec(target);
+    const abs = Math.abs(d);
+    el.textContent = (d > 0 ? '+' : '-') + Math.floor(abs/60) + ':' + (abs%60).toString().padStart(2,'0');
+    el.className = 'benchmark-delta ' + (d <= 0 ? 'delta-good' : 'delta-bad');
+  } catch(e) { el.textContent = '—'; }
+}
+
+function saveBenchmarks() {
+  const data = {};
+  [1,2,3,4,5].forEach(i => {
+    const el = document.getElementById('b'+i);
+    if (el && el.value) data['b'+i] = el.value;
+  });
+  localStorage.setItem(BENCHMARKS_KEY, JSON.stringify(data));
+  showToast('Benchmarks saved');
+}
+
+function loadBenchmarks() {
+  const saved = JSON.parse(localStorage.getItem(BENCHMARKS_KEY) || '{}');
+  const targets = ['27:30','57:00','44:00','26:00','42:00'];
+  [1,2,3,4,5].forEach((n, i) => {
+    const el = document.getElementById('b'+n);
+    if (el && saved['b'+n]) {
+      el.value = saved['b'+n];
+      calcDelta(i, el, targets[i]);
+    }
+  });
+}
+
+// STABILITY
+function renderStability() {
+  const saved = JSON.parse(localStorage.getItem(STABILITY_KEY) || '{}');
+  const c = document.getElementById('stability-container');
+  let html = '';
+  stabilityExercises.forEach(sec => {
+    html += `<div class="section-header">${sec.section}</div>`;
+    sec.items.forEach(ex => {
+      const key = ex.name.replace(/[\s()]/g,'_');
+      html += `<div class="stab-exercise card">
+        <div class="stab-name">${ex.name}</div>
+        <div class="stab-metric">${ex.m}</div>
+        <div class="week-inputs">
+          ${[1,2,3,4,5,6].map(w => `
+            <div class="week-input-wrap">
+              <span class="week-label">Wk${w}</span>
+              <input type="text" class="week-input" id="stab_${key}_w${w}" inputmode="decimal" placeholder="—" value="${(saved[key]&&saved[key][w])||''}">
+            </div>
+          `).join('')}
+        </div>
+      </div>`;
+    });
+  });
+  c.innerHTML = html;
+}
+
+function saveStability() {
+  const data = {};
+  stabilityExercises.forEach(sec => {
+    sec.items.forEach(ex => {
+      const key = ex.name.replace(/[\s()]/g,'_');
+      data[key] = {};
+      [1,2,3,4,5,6].forEach(w => {
+        const el = document.getElementById(`stab_${key}_w${w}`);
+        if (el && el.value) data[key][w] = el.value;
+      });
+    });
+  });
+  localStorage.setItem(STABILITY_KEY, JSON.stringify(data));
+  showToast('Progress saved');
+}
+
+// PROGRAM
+function renderWorkoutDays() {
+  const c = document.getElementById('workout-days-container');
+  c.innerHTML = workoutDays.map((d, i) => `
+    <div class="day-block">
+      <div class="day-header" onclick="toggleDay(${i})">
+        <div>
+          <div class="day-name">${d.day}</div>
+          <div class="day-focus">${d.focus}</div>
+        </div>
+        <i class="ti ti-chevron-down day-chevron" id="chev-${i}" aria-hidden="true"></i>
+      </div>
+      <div class="day-body" id="day-${i}">
+        ${d.blocks.map(b => `
+          <div class="block-section">
+            <div class="block-label">${b.label}</div>
+            ${b.items.map(item => `<div class="block-item">${item}</div>`).join('')}
+          </div>
+        `).join('')}
+        <div class="intensity-badge">${d.intensity}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleDay(i) {
+  const body = document.getElementById('day-' + i);
+  const chev = document.getElementById('chev-' + i);
+  body.classList.toggle('open');
+  chev.classList.toggle('open');
+}
+
+// INIT
+document.getElementById('log-date').value = new Date().toISOString().slice(0,10);
+addExerciseRow();
+renderWorkoutDays();
+loadBenchmarks();
+updateDashboard();
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
